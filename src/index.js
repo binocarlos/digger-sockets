@@ -19,6 +19,9 @@
 var Client = require('digger-client');
 var Sockets = require('socket.io-client');
 
+var Blueprint = require('./blueprints');
+var Template = require('./templates');
+
 /*
 
 	we construct the global $digger using this factory function
@@ -48,17 +51,23 @@ module.exports = function(config){
 		})
 	}
 
-	var socket_handler = disconnected_handler;
+	var run_socket = disconnected_handler;
 
   socket.on('connect', function(){
   	
-  	socket_handler = function(req, reply){
+  	run_socket = function(req, reply){
   		
   		var http_req = {
   			method:req.method,
   			url:req.url,
   			headers:req.headers,
   			body:req.body
+  		}
+
+  		if($digger.config.debug){
+  			console.log('-------------------------------------------');
+  			console.log('request: ' + req.method + ' ' + req.url);
+  			console.dir(http_req);
   		}
 
   		socket.emit('request', http_req, function(answer){
@@ -71,41 +80,27 @@ module.exports = function(config){
   			var error = answer.error;
   			var results = answer.results;
 
+  			if($digger.config.debug){
+  				console.log('-------------------------------------------');
+  				console.log('error:' + error);
+  				console.dir(results);
+  			}
+
   			reply(error, results);
   		})
   	}
 
   	request_buffer.forEach(function(buffered_request){
-  		socket_handler(buffered_request.req, buffered_request.reply);
+  		run_socket(buffered_request.req, buffered_request.reply);
   	})
 
   	request_buffer = [];
   	
     //socket.on('event', function(data){});
     socket.on('disconnect', function(){
-    	socket_handler = disconnected_handler;
+    	run_socket = disconnected_handler;
     });
   });
-
-	/*
-	
-		run a request via $.ajax
-		
-	*/
-	function run_jquery(req, reply){
-		console.log('-------------------------------------------');
-		console.log('running JQUERY');
-	}
-
-	/*
-	
-		run a request via angular.resource
-		
-	*/
-	function run_angular(req, reply){
-		console.log('-------------------------------------------');
-		console.log('running ANGULAR');
-	}
 
 	/*
 	
@@ -121,16 +116,14 @@ module.exports = function(config){
 		
 	*/
 	function handle(req, reply){
-		if(window.angular){
-			run_angular(req, reply);
-		}
-		else if(window.$){
-			run_jquery(req, reply);
-		}
-		else{
-			socket_handler(req, reply);
-		}
+		run_socket(req, reply);
 	}
 
-	return Client(handle);
+	var $digger = Client(handle);
+	$digger.config = config;
+	$digger.user = config.user;
+	$digger.blueprint = Blueprint();
+	$digger.template = Template();
+
+	return $digger;
 }
