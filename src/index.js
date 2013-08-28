@@ -32,8 +32,16 @@ var Template = require('./templates');
 	
 */
 module.exports = function(config){
+
 	config = config || {};
 
+	if(config.debug){
+		console.log('-------------------------------------------');
+		console.log('-------------------------------------------');
+		console.log('CONFIG');
+		console.dir(config);	
+	}
+	
 	var connecturl = '//' + (config.host || 'localhost');
 
 	var socket = Sockets.connect(connecturl);
@@ -51,6 +59,73 @@ module.exports = function(config){
 		})
 	}
 
+	function padding(offset){
+		offset = offset || 0;
+		var st = '';
+		for(var i=0; i<offset; i++){
+			st += '    ';
+		}
+		return st;
+	}
+
+	function is_contract(req){
+		return req.url=='/reception' && req.method=='post';
+	}
+
+	function log_contract(contract, offset){
+		console.log(padding(offset) + '-------------------------------------------');
+		console.log(padding(offset) + 'contract: ' + contract.headers['x-contract-type']);
+		offset++;
+		var summary = [];
+		(contract.body || []).forEach(function(child){
+			summary.push(log_request(child, offset));
+		})
+		return 'contract: ' + summary.join(' ' + contract.headers['x-contract-type'] + ' ');
+	}
+
+	function log_warehouse_request(req, offset){
+		var extra = '';
+		if(req.headers['x-json-selector']){
+			var selector = req.headers['x-json-selector'];
+			extra = ' - select: ' + selector.string;
+		}
+		var summary = 'request: ' + req.method + ' ' + req.url + extra;
+		console.log(padding(offset) + '-------------------------------------------');
+		console.log(padding(offset) + summary);
+
+		return summary;
+	}
+
+	function log_request(packet, offset){
+		offset = offset || 0;
+		var summary = '';
+		if(is_contract(packet)){
+			summary = log_contract(packet, offset);
+		}
+		else{
+			summary = log_warehouse_request(packet, offset);
+		}
+		return summary;
+	}
+
+	function log_response_factory(summary){
+		return function(answer){
+			var extra = '';
+			if(answer.error){
+				extra = 'ERROR: ' + answer.error;
+			}
+			else{
+				extra = summary;
+			}
+			console.log('-------------------------------------------');
+			console.log('ANSWER');
+			console.log(extra);
+			console.log('-------------------------------------------');
+			console.dir(answer.results);
+			console.log('-------------------------------------------');	
+		}
+	}
+
 	var run_socket = disconnected_handler;
 
   socket.on('connect', function(){
@@ -64,10 +139,10 @@ module.exports = function(config){
   			body:req.body
   		}
 
+  		var log_response = null;
+
   		if($digger.config.debug){
-  			console.log('-------------------------------------------');
-  			console.log('request: ' + req.method + ' ' + req.url);
-  			console.dir(http_req);
+  			log_response = log_response_factory(log_request(req));
   		}
 
   		socket.emit('request', http_req, function(answer){
@@ -80,13 +155,11 @@ module.exports = function(config){
   			var error = answer.error;
   			var results = answer.results;
 
-  			if($digger.config.debug){
-  				console.log('-------------------------------------------');
-  				console.log('error:' + error);
-  				console.dir(results);
-  			}
-
   			reply(error, results);
+
+  			if($digger.config.debug){
+  				log_response(answer);
+  			}
   		})
   	}
 
@@ -125,5 +198,22 @@ module.exports = function(config){
 	$digger.blueprint = Blueprint();
 	$digger.template = Template();
 
+	/*
+	
+		we have been given some blueprints to automatically load
+		
+	*/
+	if(config.blueprints){
+		setTimeout(function(){
+			var blueprintwarehouse = $digger.connect(config.blueprints);
+			blueprintwarehouse('*')
+				.ship(function(blueprints){
+					blueprints.find('blueprint').each(function(blueprint){
+	          $digger.blueprint.add(blueprint);
+	        })
+				})
+		})
+	}
+	
 	return $digger;
 }

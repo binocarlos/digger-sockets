@@ -21,15 +21,18 @@ var blueprints = {};
 
 module.exports = function(){
 	return {
-	  add:function(name, print){
-	  	if(arguments.length==1 && typeof(arguments[0])==='object'){
-	  		for(var i in prints){
-		      blueprints[i] = prints[i];
-		    }	
+	  add:function(blueprint){
+	  	if(!blueprint.fields){
+	  		if(typeof(blueprint.find)==='function'){
+	  			blueprint.fields = blueprint.find('field').models;		
+	  		}
+	  		else{
+	  			blueprint.fields = [];
+	  		}
 	  	}
-	  	else if(arguments.length==2){
-	  		blueprints[name] = print;
-	  	}
+
+	  	blueprints[blueprint.title()] = blueprint;
+	  	
 	    return this;
 	  },
 	  get:function(name){
@@ -37,6 +40,13 @@ module.exports = function(){
 	      return blueprints;
 	    }
 	    return blueprints[name];
+	  },
+	  all:function(){
+	  	var ret = {};
+	  	for(var prop in blueprints){
+	  		ret[prop] = blueprints[prop];
+	  	}
+	  	return ret;
 	  },
 	  create:function(name){
 			var blueprint = this.get(name);
