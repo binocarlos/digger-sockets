@@ -16,6 +16,7 @@
  * Module dependencies.
  */
 
+var utils = require('digger-utils');
 var Client = require('digger-client');
 var Sockets = require('socket.io-client');
 
@@ -129,10 +130,13 @@ module.exports = function(config){
 	var run_socket = disconnected_handler;
 
   socket.on('connect', function(){
+
+  	var callbacks = {};
   	
   	run_socket = function(req, reply){
   		
   		var http_req = {
+  			id:utils.littleid(),
   			method:req.method,
   			url:req.url,
   			headers:req.headers,
@@ -145,7 +149,7 @@ module.exports = function(config){
   			log_response = log_response_factory(log_request(req));
   		}
 
-  		socket.emit('request', http_req, function(answer){
+  		callbacks[http_req.id] = function(answer){
 
   			/*
   			
@@ -160,8 +164,21 @@ module.exports = function(config){
   			if($digger.config.debug){
   				log_response(answer);
   			}
-  		})
+
+  			delete(callbacks[http_req.id]);
+  		}
+
+  		socket.emit('request', http_req)
   	}
+
+  	socket.on('response', function(answer){
+  		var id = answer.id;
+
+  		var callback = callbacks[id];
+  		if(callback){
+  			callback(answer);
+  		}
+  	})
 
   	request_buffer.forEach(function(buffered_request){
   		run_socket(buffered_request.req, buffered_request.reply);
@@ -202,7 +219,7 @@ module.exports = function(config){
 	
 		we have been given some blueprints to automatically load
 		
-	*/
+	
 	if(config.blueprints){
 		setTimeout(function(){
 			var blueprintwarehouse = $digger.connect(config.blueprints);
@@ -214,6 +231,6 @@ module.exports = function(config){
 				})
 		})
 	}
-	
+	*/
 	return $digger;
 }
