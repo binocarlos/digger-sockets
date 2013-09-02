@@ -172,6 +172,7 @@ module.exports = function(config){
   	}
 
   	socket.on('response', function(answer){
+
   		var id = answer.id;
 
   		var callback = callbacks[id];
