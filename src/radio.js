@@ -14,21 +14,55 @@
 
 /*
 
-	TEMPLATES
+	the channels we are listening to
 	
 */
+var EventEmitter2 = require('eventemitter2').EventEmitter2;
+var util = require('util');
+
 module.exports = function(){
-	return {
-		templates:{},
-		add:function(name, plate){
-			this.templates[name] = plate.replace(/^\s+/, '').replace(/\s+$/);
-	    return this;
-	  },
-	  get:function(name){
-	    if(arguments.length<=0){
-	      return this.templates;
-	    }
-	    return this.templates[name];
-	  }
-	}
+	var radio = new EventEmitter2({
+    wildcard: true
+  })
+
+  var channels = new EventEmitter2({
+    wildcard: true
+  })
+
+  radio.talk = function(channel, body){
+  	radio.emit('talk', channel, body);
+  }
+
+  radio.listen = function(channel, fn){
+  	if(!fn){
+			fn = channel;
+			channel = '*';
+		}
+		channel = (channel===null || channel==='') ? '*' : channel;
+		channels.on(channel==='*' ? '_all' : channel, fn);
+  	radio.emit('listen', channel);
+  }
+
+  radio.cancel = function(channel, fn){
+  	var emitterkey = channel==='*' ? '_all': channel;
+
+		if(fn){
+			radio.off(emitterkey, fn);
+		}
+		else{
+			radio.removeAllListeners(emitterkey);	
+		}
+		var listeners = radio.listeners(emitterkey);
+		if(listeners.length<=0){
+			radio.emit('cancel', channel.replace(/\*$/, ''));
+		}
+  }
+
+  radio.receive = function(channel, body){
+		channels.emit(channel, body, channel);
+		channels.emit('_all', body, channel);
+  }
+
+  return radio;
+
 }

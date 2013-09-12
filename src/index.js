@@ -18,10 +18,11 @@
 
 var utils = require('digger-utils');
 var Client = require('digger-client');
-var Sockets = require('socket.io-client');
+//var Sockets = require('socket.io-client');
 
 var Blueprint = require('./blueprints');
 var Template = require('./templates');
+var Radio = require('./radio');
 
 /*
 
@@ -36,6 +37,9 @@ module.exports = function(config){
 
 	config = config || {};
 
+	// the object we return
+	var $digger;
+
 	if(config.debug){
 		console.log('-------------------------------------------');
 		console.log('-------------------------------------------');
@@ -43,9 +47,9 @@ module.exports = function(config){
 		console.dir(config);	
 	}
 	
-	var connecturl = '//' + (config.host || 'localhost');
+	var socket = new SockJS('//' + (config.host || 'localhost') + '/digger/sockets');
 
-	var socket = Sockets.connect(connecturl);
+
 
 	/*
 	
@@ -53,6 +57,9 @@ module.exports = function(config){
 		
 	*/
 	var request_buffer = [];
+	var socketconnected = false;
+	var callbacks = {};
+
 	function disconnected_handler(req, reply){
 		request_buffer.push({
 			req:req,
@@ -127,71 +134,152 @@ module.exports = function(config){
 		}
 	}
 
-	var run_socket = disconnected_handler;
-
-  socket.on('connect', function(){
-
-  	var callbacks = {};
-  	
-  	run_socket = function(req, reply){
-  		
-  		var http_req = {
-  			id:utils.littleid(),
-  			method:req.method,
-  			url:req.url,
-  			headers:req.headers,
-  			body:req.body
-  		}
-
-  		var log_response = null;
-
-  		if($digger.config.debug){
-  			log_response = log_response_factory(log_request(req));
-  		}
-
-  		callbacks[http_req.id] = function(answer){
-
-  			/*
-  			
-  				the socket handler bundles the error and answer into a single object
-  				
-  			*/
-  			var error = answer.error;
-  			var results = answer.results;
-
-  			reply(error, results);
-
-  			if($digger.config.debug){
-  				log_response(answer);
-  			}
-
-  			delete(callbacks[http_req.id]);
-  		}
-
-  		socket.emit('request', http_req)
-  	}
-
-  	socket.on('response', function(answer){
-
-  		var id = answer.id;
-
-  		var callback = callbacks[id];
-  		if(callback){
-  			callback(answer);
-  		}
-  	})
-
-  	request_buffer.forEach(function(buffered_request){
+	function clear_buffer(){
+  	var usebuffer = [].concat(request_buffer);
+		usebuffer.forEach(function(buffered_request){
   		run_socket(buffered_request.req, buffered_request.reply);
   	})
-
-  	request_buffer = [];
   	
-    //socket.on('event', function(data){});
-    socket.on('disconnect', function(){
-    	run_socket = disconnected_handler;
-    });
-  });
+  	request_buffer = [];
+	}
+
+
+	function connected_handler(req, reply){
+
+		if(!req || !req.url || !req.method){
+			throw new Error('req must have a url and method');
+		}
+		
+		/*
+		
+			------------------------------------------------------
+			------------------------------------------------------
+			------------------------------------------------------
+			------------------------------------------------------
+			------------------------------------------------------
+
+			THIS IS A TERRIBLE HACK
+
+			I have changed to sockjs - defo a good idea coz it aint
+			bloatware like socket.io
+
+			However - and another good thing - we have lost the old
+			(very hacky) way of accessing the cookie from the handsake
+			of the socket
+
+			So - the solution is to have OAuth Access tokens working
+			alongside cookie logins
+
+			A session can have the OAuth tokens and so those can be
+			written to the page and then they can be submitted to the socket
+
+		*/
+		var headers = req.headers || {};
+
+		if(config.user){
+			headers['x-json-user'] = config.user;
+		}
+
+		var http_req = {
+			id:utils.littleid(),
+			method:req.method,
+			url:req.url,
+			headers:headers,
+			body:req.body
+		}
+
+		var log_response = null;
+
+		if($digger.config.debug){
+			log_response = log_response_factory(log_request(req));
+		}
+
+		callbacks[http_req.id] = function(answer){
+
+			/*
+			
+				the socket handler bundles the error and answer into a single object
+				
+			*/
+			var error = answer.error;
+			var results = answer.results;
+
+			reply(error, results);
+
+			if($digger.config.debug){
+				log_response(answer);
+			}
+
+			delete(callbacks[http_req.id]);
+		}
+		
+		socket.send(JSON.stringify({
+			type:'request',
+			data:http_req
+		}))
+	}
+
+	function socket_answer(payload){
+		payload = payload.toString();
+		payload = JSON.parse(payload);
+
+		if(payload.type=='response'){
+			var answer = payload.data;
+			var id = answer.id;
+			var callback = callbacks[id];
+			if(callback){
+				callback(answer);
+			}	
+		}
+		else if(payload.type=='radio'){
+
+			var packet = payload.data;
+
+			// pipe the packet into the radio
+			$digger.radio.receive(packet.channel, packet.body);
+		}
+		else if(payload.type=='error'){
+			console.error('socket error: ' + payload.error);
+		}
+		else{
+			console.error('unknown payload type: ' + payload.type);	
+		}
+	}
+
+	function run_socket(req, reply){
+		if(socketconnected){
+			connected_handler(req, reply);
+		}
+		else{
+			disconnected_handler(req, reply);
+		}
+	};
+
+  socket.onopen = function() {
+    if(config.debug){
+    	console.log('socket connected');
+    }
+    socketconnected = true;
+    $digger.emit('connect');
+    setTimeout(clear_buffer, 10);
+  };
+
+  // start off with the message buffer
+  socket.onmessage = function(e){
+  	if(e.type==='message'){
+  		socket_answer(e.data);
+  	}
+  }
+  
+  // close
+  socket.onclose = function() {
+    if(config.debug){
+    	console.log('socket disconnected');
+    }
+
+    socketconnected = false;
+    $digger.emit('disconnect');
+  };
 
 	/*
 	
@@ -206,15 +294,48 @@ module.exports = function(config){
 		in all cases the portals run via the socket
 		
 	*/
-	function handle(req, reply){
-		run_socket(req, reply);
-	}
+	$digger = Client(run_socket);
 
-	var $digger = Client(handle);
 	$digger.config = config;
 	$digger.user = config.user;
 	$digger.blueprint = Blueprint();
 	$digger.template = Template();
+	$digger.radio = Radio();
+
+	/*
+	
+		write the radio broadcast down the wire
+
+		$digger.radio.recieve(packet.channel, packet.);
+
+		^^^^^^ this is up in the generic socket reciever
+		
+	*/
+	$digger.radio.on('talk', function(channel, payload){
+		socket.send(JSON.stringify({
+			type:'radio:talk',
+			data:{
+				channel:channel,
+				body:body
+			}
+		}))
+	})
+
+	$digger.radio.on('listen', function(channel, payload){
+		socket.send(JSON.stringify({
+			type:'radio:listen',
+			data:channel
+		}))
+	})
+
+	$digger.radio.on('cancel', function(channel, payload){
+		socket.send(JSON.stringify({
+			type:'radio:cancel',
+			data:channel
+		}))
+	})
+
+
 
 	/*
 	

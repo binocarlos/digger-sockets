@@ -42,12 +42,6 @@ Then on a web-page:
 </script>
 ```
 
-## JQuery and angular
-
-If digger-sockets finds Jquery or angular on the page - it will use those as connectors for REQ/REP requests.
-
-It will still use the socket for switchboard (realtime) requests.
-
 ## licence
 
 MIT
