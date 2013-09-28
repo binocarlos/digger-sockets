@@ -17,12 +17,13 @@
  */
 
 var utils = require('digger-utils');
-var Client = require('digger-client');
+
 //var Sockets = require('socket.io-client');
 
 var Blueprint = require('./blueprints');
 var Template = require('./templates');
-var Radio = require('./radio');
+var Radio = require('digger-radio');
+var Client = require('digger-client');
 
 /*
 
@@ -48,8 +49,6 @@ module.exports = function(config){
 	}
 	
 	var socket = new SockJS('//' + (config.host || 'localhost') + '/digger/sockets');
-
-
 
 	/*
 	
@@ -236,7 +235,7 @@ module.exports = function(config){
 			var packet = payload.data;
 
 			// pipe the packet into the radio
-			$digger.radio.receive(packet.channel, packet.body);
+			$digger.radio.receive(packet.channel, packet.payload);
 		}
 		else if(payload.type=='error'){
 			console.error('socket error: ' + payload.error);
@@ -269,6 +268,10 @@ module.exports = function(config){
   	if(e.type==='message'){
   		socket_answer(e.data);
   	}
+  	else if(e.type==='radio'){
+  		var channel = e.data.channel;
+  		var payload = e.data.payload;
+  	}
   }
   
   // close
@@ -300,59 +303,69 @@ module.exports = function(config){
 	$digger.user = config.user;
 	$digger.blueprint = Blueprint();
 	$digger.template = Template();
-	$digger.radio = Radio();
+
+
+  /*
+  
+    give each container it's own radio by wrapping the main one
+
+  */
+  $digger.radio = Radio();
+  
+  Client.Container.augment_prototype({
+    // return a radio object that is bound to the container
+    radio:function(){
+      var base = this.diggerwarehouse().replace(/^\//, '').replace(/\//g, '.') + '.' + (this.diggerpath() || []).join('.');
+      return connect_radio(Radio(base + '.'));
+    }
+  })
+
 
 	/*
 	
-		write the radio broadcast down the wire
-
-		$digger.radio.recieve(packet.channel, packet.);
-
-		^^^^^^ this is up in the generic socket reciever
+		give each container it's own radio
 		
 	*/
-	$digger.radio.on('talk', function(channel, payload){
-		socket.send(JSON.stringify({
-			type:'radio:talk',
-			data:{
-				channel:channel,
-				body:body
-			}
-		}))
-	})
+	function connect_radio(radio){
 
-	$digger.radio.on('listen', function(channel, payload){
-		socket.send(JSON.stringify({
-			type:'radio:listen',
-			data:channel
-		}))
-	})
-
-	$digger.radio.on('cancel', function(channel, payload){
-		socket.send(JSON.stringify({
-			type:'radio:cancel',
-			data:channel
-		}))
-	})
-
-
-
-	/*
-	
-		we have been given some blueprints to automatically load
-		
-	
-	if(config.blueprints){
-		setTimeout(function(){
-			var blueprintwarehouse = $digger.connect(config.blueprints);
-			blueprintwarehouse('*')
-				.ship(function(blueprints){
-					blueprints.find('blueprint').each(function(blueprint){
-	          $digger.blueprint.add(blueprint);
-	        })
-				})
+		function send_packet(action, channel, payload){
+			socket.send(JSON.stringify({
+				type:'radio',
+				data:{
+					action:action,
+					channel:channel,
+					payload:payload
+				}
+			}))
+		}
+			
+		// send a packet out on the radio network
+		radio.on('talk', function(channel, payload){
+			send_packet('talk', channel, payload);
 		})
+
+		// tell the switchboard that we want to hear about these packets
+		radio.on('listen', function(channel){
+			send_packet('listen', channel);
+		})
+
+		// tell the switchboard to stop hearing about these packets
+		radio.on('cancel', function(channel){
+			send_packet('cancel', channel);
+		})
+
+		return radio;
 	}
-	*/
+
+	// get us the radio connected to the sockets
+	$digger.radio = connect_radio(Radio());
+
+	Client.Container.augment_prototype({
+		// return a wrapped radio based on the container
+		radio:function(){
+			return Radio.container_wrapper($digger.radio, this);
+		}
+	})
+
 	return $digger;
 }
