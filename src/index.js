@@ -329,6 +329,10 @@ module.exports = function(config){
 	function connect_radio(radio){
 
 		function send_packet(action, channel, payload){
+
+			console.log('-------------------------------------------');
+			console.log('-------------------------------------------');
+			console.dir(channel);
 			socket.send(JSON.stringify({
 				type:'radio',
 				data:{
