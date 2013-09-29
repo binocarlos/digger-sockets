@@ -26,6 +26,6 @@
   "dependencies": {
     "digger-client": "~0.0.3",
     "digger-utils": "~1.0.4",
-    "digger-radio": "0.0.1"
+    "digger-radio": "~0.0.1"
   }
 }
