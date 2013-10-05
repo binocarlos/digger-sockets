@@ -17,9 +17,18 @@
 	BLUEPRINTS
 	
 */
-var blueprints = {};
-
 module.exports = function(){
+
+	var blueprints = {};
+	var holder = null;
+
+	function ensure_holder(){
+		if(!holder){
+			holder = $digger.create();
+		}
+		return holder;
+	}
+
 	return {
 	  add:function(blueprint){
 	  	if(!blueprint.fields){
@@ -31,9 +40,37 @@ module.exports = function(){
 	  		}
 	  	}
 
+	  	ensure_holder();
+	  	holder.add(blueprint);
 	  	blueprints[blueprint.title()] = blueprint;
 	  	
 	    return this;
+	  },
+	  has_children:function(for_blueprint){
+	  	if(!for_blueprint || !for_blueprint.attr('leaf')){
+	  		return true;
+	  	}
+	  	else{
+	  		return false;
+	  	}
+	  },
+	  // get a container that holds the blueprints that can be added to the given blueprint
+	  get_children:function(for_blueprint){
+	  	ensure_holder();
+	  	if(!for_blueprint){
+	  		return holder;
+	  	}
+
+	  	if(for_blueprint.attr('leaf')){
+	  		return null;
+	  	}
+
+	  	if(for_blueprint.attr('children')){
+	  		return holder.find(for_blueprint.attr('children'));
+	  	}
+	  	else{
+	  		return holder;
+	  	}
 	  },
 	  get:function(name){
 	    if(arguments.length<=0){

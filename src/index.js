@@ -304,23 +304,6 @@ module.exports = function(config){
 	$digger.blueprint = Blueprint();
 	$digger.template = Template();
 
-
-  /*
-  
-    give each container it's own radio by wrapping the main one
-
-  */
-  $digger.radio = Radio();
-  
-  Client.Container.augment_prototype({
-    // return a radio object that is bound to the container
-    radio:function(){
-      var base = this.diggerwarehouse().replace(/^\//, '').replace(/\//g, '.') + '.' + (this.diggerpath() || []).join('.');
-      return connect_radio(Radio(base + '.'));
-    }
-  })
-
-
 	/*
 	
 		give each container it's own radio
