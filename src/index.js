@@ -143,6 +143,11 @@ module.exports = function(config){
 	}
 
 
+	/*
+	
+		this is the request handler once the socket is connected
+		
+	*/
 	function connected_handler(req, reply){
 
 		if(!req || !req.url || !req.method){
@@ -230,6 +235,9 @@ module.exports = function(config){
 				callback(answer);
 			}	
 		}
+		else if(payload.type=='auth'){
+
+		}
 		else if(payload.type=='radio'){
 
 			var packet = payload.data;
@@ -260,6 +268,12 @@ module.exports = function(config){
     }
     socketconnected = true;
     $digger.emit('connect');
+    if($digger.config.user){
+    	socket.send(JSON.stringify({
+				type:'auth',
+				data:$digger.config.user
+			}))
+    }
     setTimeout(clear_buffer, 10);
   };
 
