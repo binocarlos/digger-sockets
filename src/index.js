@@ -154,35 +154,23 @@ module.exports = function(config){
 			throw new Error('req must have a url and method');
 		}
 		
-		/*
-		
-			------------------------------------------------------
-			------------------------------------------------------
-			------------------------------------------------------
-			------------------------------------------------------
-			------------------------------------------------------
-
-			THIS IS A TERRIBLE HACK
-
-			I have changed to sockjs - defo a good idea coz it aint
-			bloatware like socket.io
-
-			However - and another good thing - we have lost the old
-			(very hacky) way of accessing the cookie from the handsake
-			of the socket
-
-			So - the solution is to have OAuth Access tokens working
-			alongside cookie logins
-
-			A session can have the OAuth tokens and so those can be
-			written to the page and then they can be submitted to the socket
-
-		*/
 		var headers = req.headers || {};
 
+		/*
+		
+			the user is now encoded into the session id that is written to the socket
+			upon connect
+
+			the session id is got from the original request for the <script src="digger.io" /> tag
+
+			it is encoded into $digger.config.user.sessionid
+			
+		*/
+		/*
 		if(config.user){
 			headers['x-json-user'] = config.user;
 		}
+		*/
 
 		var http_req = {
 			id:utils.littleid(),
