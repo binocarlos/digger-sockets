@@ -1,6 +1,6 @@
 {
   "name": "digger-sockets",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A digger supplychain that connects via socket.io for pub/sub and optionally JQuery or angular or req/rep",
   "main": "src/index.js",
   "scripts": {
