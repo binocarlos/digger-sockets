@@ -30,6 +30,21 @@ module.exports = function(){
 	}
 
 	return {
+		load:function(warehouses){
+			var self = this;
+			//'/config/demo_blueprints.xml'
+			var blueprintwarehouse = $digger.connect(warehouses);
+	    blueprintwarehouse('*')
+	      .ship(function(blueprints){
+	        blueprints.find('blueprint').each(function(blueprint){
+	          if($digger.config.debug){
+	            console.log('-------------------------------------------');
+	            console.log('adding blueprint: ' + blueprint);
+	          }
+	          self.add(blueprint);
+	        })
+	      })
+		},
 	  add:function(blueprint){
 	  	if(!blueprint.fields){
 	  		if(typeof(blueprint.find)==='function'){
