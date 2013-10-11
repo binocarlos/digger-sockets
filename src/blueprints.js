@@ -30,7 +30,7 @@ module.exports = function(){
 	}
 
 	return {
-		load:function(warehouses){
+		load:function(warehouses, done){
 			var self = this;
 			
 			var blueprintwarehouse = $digger.connect(warehouses);
@@ -43,6 +43,7 @@ module.exports = function(){
 	          }
 	          self.add(blueprint);
 	        })
+	        done && done();
 	      })
 		},
 	  add:function(blueprint){
