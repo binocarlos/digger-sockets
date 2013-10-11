@@ -133,6 +133,12 @@ module.exports = function(config){
 		}
 	}
 
+	/*
+	
+		this is the buffer for queries before we are connected
+
+		
+	*/
 	function clear_buffer(){
   	var usebuffer = [].concat(request_buffer);
 		usebuffer.forEach(function(buffered_request){
@@ -256,6 +262,7 @@ module.exports = function(config){
     }
     socketconnected = true;
     $digger.emit('connect');
+    $digger.emit('ready');
     if($digger.config.user){
     	socket.send(JSON.stringify({
 				type:'auth',
@@ -300,7 +307,6 @@ module.exports = function(config){
 		
 	*/
 	$digger = Client(run_socket);
-
 	$digger.config = config;
 	$digger.user = config.user;
 	$digger.blueprint = Blueprint();
