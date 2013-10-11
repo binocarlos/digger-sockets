@@ -32,7 +32,7 @@ module.exports = function(){
 	return {
 		load:function(warehouses){
 			var self = this;
-			//'/config/demo_blueprints.xml'
+			
 			var blueprintwarehouse = $digger.connect(warehouses);
 	    blueprintwarehouse('*')
 	      .ship(function(blueprints){
