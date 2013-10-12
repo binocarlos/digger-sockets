@@ -39,9 +39,12 @@ module.exports = function(){
 	        blueprints.find('blueprint').each(function(blueprint){
 	          if($digger.config.debug){
 	            console.log('-------------------------------------------');
-	            console.log('adding blueprint: ' + blueprint);
+	            console.log('adding blueprint: ' + blueprint.attr('name'));
 	          }
 	          self.add(blueprint);
+	        })
+	        blueprints.find('template').each(function(template){
+	          $digger.template.add(template.attr('name'));
 	        })
 	        done && done();
 	      })

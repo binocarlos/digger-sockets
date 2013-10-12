@@ -21,6 +21,10 @@ module.exports = function(){
 	return {
 		templates:{},
 		add:function(name, plate){
+			if($digger.config.debug){
+        console.log('-------------------------------------------');
+        console.log('adding template: ' + name);
+      }
 			this.templates[name] = plate.replace(/^\s+/, '').replace(/\s+$/);
 	    return this;
 	  },
