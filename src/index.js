@@ -62,7 +62,7 @@ module.exports = function(config){
 		requests issued before we had a socket connection or our other transport was ready
 		
 	*/
-	var request_buffer = [];
+	var request_buffer = [];	
 	var socketconnected = false;
 	var callbacks = {};
 
@@ -142,7 +142,13 @@ module.exports = function(config){
 	function clear_buffer(){
   	var usebuffer = [].concat(request_buffer);
 		usebuffer.forEach(function(buffered_request){
-  		run_socket(buffered_request.req, buffered_request.reply);
+			if(buffered_request.fn){
+				buffered_request.fn();
+			}
+			else if(buffered_request.req){
+				run_socket(buffered_request.req, buffered_request.reply);	
+			}
+  		
   	})
   	
   	request_buffer = [];
@@ -275,7 +281,26 @@ module.exports = function(config){
 		}
 	}
 
-
+	/*
+	
+		manually write to the socket once it's ready
+		(used by radio subscriptions)
+		
+	*/
+	function bufferred_write(req){
+		function do_write(){
+			socket.send(req);
+		}
+		if(socketconnected){
+			do_write();
+		}
+		else{
+			request_buffer.push({
+				fn:do_write
+			})
+		}
+	}
+	
 	function run_socket(req, reply){
 		if(socketconnected){
 			connected_handler(req, reply);
@@ -355,7 +380,7 @@ module.exports = function(config){
 
 		function send_packet(action, channel, payload){
 
-			socket.send(JSON.stringify({
+			bufferred_write(JSON.stringify({
 				type:'radio',
 				data:{
 					action:action,
