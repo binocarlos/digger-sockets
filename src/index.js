@@ -237,7 +237,7 @@ module.exports = function(config){
 			}	
 		}
 		else if(payload.type=='auth'){
-
+			socket_is_ready();
 		}
 		else if(payload.type=='radio'){
 
@@ -254,6 +254,14 @@ module.exports = function(config){
 		}
 	}
 
+	function socket_is_ready(){
+		if(!socketconnected){
+			socketconnected = true;
+	    $digger.emit('connect');
+	    $digger.emit('ready');	
+		}
+	}
+
 	function run_socket(req, reply){
 		if(socketconnected){
 			connected_handler(req, reply);
@@ -267,16 +275,17 @@ module.exports = function(config){
     if(config.debug){
     	console.log('socket connected');
     }
-    socketconnected = true;
-    $digger.emit('connect');
-    $digger.emit('ready');
+    
     if($digger.config.user){
     	socket.send(JSON.stringify({
 				type:'auth',
 				data:$digger.config.user
 			}))
     }
-    setTimeout(clear_buffer, 10);
+    else{
+    	socket_is_ready();
+    }
+    
   };
 
   // start off with the message buffer
