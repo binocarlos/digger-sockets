@@ -66,13 +66,6 @@ module.exports = function(config){
 	var socketconnected = false;
 	var callbacks = {};
 
-	function disconnected_handler(req, reply){
-		request_buffer.push({
-			req:req,
-			reply:reply
-		})
-	}
-
 	function padding(offset){
 		offset = offset || 0;
 		var st = '';
@@ -158,6 +151,24 @@ module.exports = function(config){
 
 	/*
 	
+		this is used before the socket is connected to stash thing we will resolve
+		upon connection
+		
+	*/
+	function disconnected_handler(req, reply){
+		if($digger.config.debug){
+			console.log('buffer request');
+			console.dir(req);
+		}
+		request_buffer.push({
+			req:req,
+			reply:reply
+		})
+	}
+
+
+	/*
+	
 		this is the request handler once the socket is connected
 		
 	*/
@@ -224,6 +235,16 @@ module.exports = function(config){
 		}))
 	}
 
+
+	function socket_is_ready(){
+		if(!socketconnected){
+			socketconnected = true;
+			clear_buffer();
+	    $digger.emit('connect');
+	    $digger.emit('ready');	
+		}
+	}
+
 	function socket_answer(payload){
 		payload = payload.toString();
 		payload = JSON.parse(payload);
@@ -254,13 +275,6 @@ module.exports = function(config){
 		}
 	}
 
-	function socket_is_ready(){
-		if(!socketconnected){
-			socketconnected = true;
-	    $digger.emit('connect');
-	    $digger.emit('ready');	
-		}
-	}
 
 	function run_socket(req, reply){
 		if(socketconnected){
