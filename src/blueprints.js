@@ -41,7 +41,7 @@ module.exports = function(){
 			var self = this;
 			
 			var blueprintwarehouse = $digger.connect(warehouses);
-	    blueprintwarehouse('blueprint')
+	    blueprintwarehouse('>blueprint:tree')
 	      .ship(function(blueprints){
 	        blueprints.find('blueprint').each(function(blueprint){
 	          if($digger.config.debug){
@@ -76,6 +76,10 @@ module.exports = function(){
 	        })
 	        done && done();
 	      })
+		},
+		reset:function(){
+			blueprints = {};
+			holder = $digger.create();
 		},
 		/*
 		
@@ -180,6 +184,9 @@ module.exports = function(){
 	      return blueprints;
 	    }
 	    return blueprints[name];
+	  },
+	  all_containers:function(){
+	  	return holder.containers();
 	  },
 	  all:function(){
 	  	var ret = {};
