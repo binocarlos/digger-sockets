@@ -41,7 +41,7 @@ module.exports = function(){
 			var self = this;
 			
 			var blueprintwarehouse = $digger.connect(warehouses);
-	    blueprintwarehouse('>blueprint:tree')
+	    blueprintwarehouse('blueprint:tree')
 	      .ship(function(blueprints){
 	        blueprints.find('blueprint').each(function(blueprint){
 	          if($digger.config.debug){
