@@ -96,6 +96,15 @@ module.exports = function(){
 
 		*/
 	  add:function(blueprint){
+	  	this.process(blueprint);
+	  	ensure_holder();
+	  	holder.add(blueprint);
+	  	blueprints[blueprint.title()] = blueprint;
+	  	
+	    return this;
+	  },
+	  // turn the container children into field and tab arrays
+	  process:function(blueprint){
 
 	  	// write the options
 	  	function map_field(field){
@@ -144,11 +153,6 @@ module.exports = function(){
 	  		}
 	  	}
 
-	  	ensure_holder();
-	  	holder.add(blueprint);
-	  	blueprints[blueprint.title()] = blueprint;
-	  	
-	    return this;
 	  },
 	  has_children:function(for_blueprint){
 	  	if(!for_blueprint || !for_blueprint.attr('leaf')){
