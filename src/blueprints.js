@@ -115,43 +115,40 @@ module.exports = function(){
 	  		return ret;
 	  	}
 
-	  	// map the fields into models
-	  	if(!blueprint.fields){
-	  		if(typeof(blueprint.find)==='function'){
-	  			var tabs = blueprint.find('tab');
+  		if(typeof(blueprint.find)==='function'){
+  			var tabs = blueprint.find('tab');
 
-	  			// only get fields at the top otherwise we suck up tab fields too
-	  			var fields = blueprint.find('> field').map(map_field);
+  			// only get fields at the top otherwise we suck up tab fields too
+  			var fields = blueprint.find('> field').map(map_field);
 
-	  			/*
-	  			
-	  				turn the tab container into tab model with fields processed
-	  				
-	  			*/
-	  			var tabs = blueprint.find('tab').map(function(tab){
+  			/*
+  			
+  				turn the tab container into tab model with fields processed
+  				
+  			*/
+  			var tabs = blueprint.find('tab').map(function(tab){
 
-	  				var model = tab.get(0);
+  				var model = tab.get(0);
 
-	  				// the whole tab is a field
-	  				if(tab.attr('type')){
-	  					return model;
-	  				}
-	  				// the tab is a list of fields
-	  				else{
-	  					model.fields = tab.find('field').map(map_field);
-	  				}
+  				// the whole tab is a field
+  				if(tab.attr('type')){
+  					return model;
+  				}
+  				// the tab is a list of fields
+  				else{
+  					model.fields = tab.find('field').map(map_field);
+  				}
 
-	  				return model;
-	  			})
+  				return model;
+  			})
 
-	  			// this is the simple flat view of all fields
-	  			blueprint.fields = fields;
-	  			blueprint.tabs = tabs;
-	  		}
-	  		else{
-	  			blueprint.fields = [];
-	  		}
-	  	}
+  			// this is the simple flat view of all fields
+  			blueprint.fields = fields;
+  			blueprint.tabs = tabs;
+  		}
+  		else{
+  			blueprint.fields = [];
+  		}
 
 	  },
 	  has_children:function(for_blueprint){
