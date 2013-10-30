@@ -54,8 +54,10 @@ module.exports = function(config){
 		cloneuser = JSON.parse(JSON.stringify(cloneuser));	
 	}
 	
+	var protocol = location.protocol;
 
-	var socket = new SockJS('//' + (config.host || 'localhost') + '/digger/sockets');
+	protocol = protocol=='file:'?'http:' : protocol;
+	var socket = new SockJS(protocol + '//' + (config.host || 'localhost') + '/digger/sockets');
 
 	/*
 	
