@@ -77,6 +77,22 @@ module.exports = function(){
 	        done && done();
 	      })
 		},
+		build_default:function(container){
+			var blueprint = $digger.create('blueprint');
+
+			Object.keys(container.attr() || {}).forEach(function(prop){
+				if(prop.indexOf('_')!=0){
+					var field = $digger.create('field', {
+						name:prop
+					})
+					blueprint.append(field);
+				}
+			})
+
+			this.process(blueprint);
+
+			return blueprint;
+		},
 		reset:function(){
 			blueprints = {};
 			holder = $digger.create();
