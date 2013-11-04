@@ -364,7 +364,25 @@ module.exports = function(config){
 		
 	*/
 	
-	$digger = Client(run_socket);
+	var supplychain = Client(run_socket);
+
+	var root_warehouse = supplychain.connect(config.root_warehouse ? config.root_warehouse : '/');
+
+	$digger = function(){
+		if(typeof(arguments[0])==='function'){
+			return $digger.on('ready', arguments[0]);
+		}
+		else{
+			return root_warehouse.select.apply(root_warehouse, utils.toArray(arguments));
+		}
+	}
+	var names = ['on', 'emit', 'connect', 'merge', 'pipe', 'handle', 'container', 'create'];
+	names.forEach(function(name){
+		$digger[name] = function(){
+			return supplychain[name].apply(supplychain, utils.toArray(arguments));
+		}
+	})
+	
 	$digger.config = config;
 	$digger.user = cloneuser;
 	if($digger.user){
