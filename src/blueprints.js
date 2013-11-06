@@ -53,27 +53,6 @@ module.exports = function(){
 	        blueprints.find('template').each(function(template){
 	          $digger.template.add(template.attr('name'), template.attr('html'));
 	        })
-	        blueprints.find('controller').each(function(controller){
-
-
-	        	var src = controller.attr('src');
-
-	        	if($digger.config.debug){
-	            console.log('-------------------------------------------');
-	            console.log('adding controller: ' + controller.attr('name'));
-	            console.log(src);
-	          }
-
-	        	try{
-	        		eval.call(window, src);
-	        	} catch(e){
-	        		console.log('-------------------------------------------');
-	        		console.log('ERROR: ');
-	        		console.log(e);
-	        		console.log(e.stack);
-	        	}
-	        	
-	        })
 	        done && done();
 	      })
 		},
@@ -212,15 +191,21 @@ module.exports = function(){
 	  	}
 	  	return ret;
 	  },
-	  create:function(name){
-			var blueprint = this.get(name);
+	  create:function(blueprint){
+	  	if(typeof(blueprint)==='string'){
+	  		blueprint = this.get(blueprint);
+	  	}
+			
 			if(!blueprint){
 				return $digger.create(name, {});
 			}
 			var data = blueprint ? {
 				_digger:{
+					leaf:blueprint.attr('leaf'),
+					blueprint:blueprint.attr('name'),
 					tag:blueprint.attr('tag') || blueprint.attr('name'),
-					class:blueprint.attr('class') || []
+					class:blueprint.digger('class') || [],
+					icon:blueprint.attr('icon')
 				}
 			} : {}
 
