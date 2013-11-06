@@ -154,6 +154,32 @@ module.exports = function(){
 	  		return false;
 	  	}
 	  },
+	  filter_children:function(blueprint_list, parent_blueprint){
+	  	
+	  	if(!parent_blueprint){
+	  		return blueprint_list;
+	  	}
+
+	  	if(parent_blueprint.attr('leaf')){
+	  		return [];
+	  	}
+
+	  	if(!parent_blueprint.attr('children')){
+	  		return blueprint_list;
+	  	}
+
+      var allowed = {};
+
+      var parts = parent_blueprint.attr('children').split(/\W+/);
+      parts.forEach(function(part){
+        allowed[part] = part;
+      })
+
+      return blueprint_list.filter(function(blueprint){
+        var name = blueprint.attr('name') || blueprint.attr('tag');
+        return allowed[name];
+      })
+    },
 	  // get a container that holds the blueprints that can be added to the given blueprint
 	  get_add_children:function(for_blueprint){
 	  	ensure_holder();
@@ -181,8 +207,13 @@ module.exports = function(){
 	    }
 	    return blueprints[name];
 	  },
-	  all_containers:function(){
-	  	return holder.containers();
+	  all_containers:function(visible){
+	  	return holder.containers().filter(function(blueprint){
+	  		if(!visible){
+	  			return true;
+	  		}
+	  		return blueprint.attr('visible')!==false;
+	  	})
 	  },
 	  all:function(){
 	  	var ret = {};
