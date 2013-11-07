@@ -208,6 +208,9 @@ module.exports = function(){
 	    return blueprints[name];
 	  },
 	  all_containers:function(visible){
+	  	if(!holder){
+	  		return [];
+	  	}
 	  	return holder.containers().filter(function(blueprint){
 	  		if(!visible){
 	  			return true;
