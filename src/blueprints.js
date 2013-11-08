@@ -147,6 +147,9 @@ module.exports = function(){
 
 	  },
 	  has_children:function(for_blueprint){
+	  	if(!for_blueprint || !for_blueprint.attr){
+	  		return true;
+	  	}
 	  	if(!for_blueprint || !for_blueprint.attr('leaf')){
 	  		return true;
 	  	}
@@ -159,6 +162,11 @@ module.exports = function(){
 	  	if(!parent_blueprint){
 	  		return blueprint_list;
 	  	}
+
+	  	if(!parent_blueprint.attr){
+	  		return [];
+	  	}
+
 
 	  	if(parent_blueprint.attr('leaf')){
 	  		return [];
