@@ -238,7 +238,9 @@ module.exports = function(){
 					leaf:blueprint.attr('leaf'),
 					blueprint:blueprint.attr('name'),
 					tag:blueprint.attr('tag') || blueprint.attr('name'),
-					class:blueprint.digger('class') || [],
+					class:(blueprint.digger('class') || []).filter(function(c){
+						return (c || '').match(/\w/);
+					}),
 					icon:blueprint.attr('icon')
 				}
 			} : {}
