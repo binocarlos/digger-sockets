@@ -80,14 +80,8 @@ describe('digger sockets', function(){
           radio[action].apply(radio, [channel, packet]);
         })
 
-        setTimeout(function(){
-          server.listen(port, function(){
-            console.log('test server listening');
-            done();
-          })  
-        })
+        server.listen(port, done);
 
-				
       })
     })
   })
