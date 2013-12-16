@@ -1,6 +1,6 @@
 {
   "name": "digger-sockets",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SockJS connector for digger requests",
   "main": "src/server.js",
   "browserify": "src/browser.js",
