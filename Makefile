@@ -1,16 +1,18 @@
-TESTS = test/*.js
-REPORTER = spec
-#REPORTER = dot
+build: install
+	@echo build ...
+	@mkdir -p build
+	@./node_modules/.bin/browserify -r \
+		./src/browser.js > build/build.js
 
-check: test
-
-test:
+test: build
+	@cp -f build/build.js test/browser.js
 	@NODE_ENV=test ./node_modules/.bin/mocha \
-		--reporter $(REPORTER) \
+		--reporter spec \
 		--timeout 300 \
 		--require should \
 		--growl \
-		$(TESTS)
+		test/test.js
+	@rm -rf test/browser.js
 
 install:
 	npm install

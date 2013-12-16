@@ -20,8 +20,7 @@ var utils = require('digger-utils');
 
 //var Sockets = require('socket.io-client');
 
-var Blueprint = require('./blueprints');
-var Template = require('./templates');
+var Blueprint = require('digger-blueprints');
 var Radio = require('digger-radio');
 var Client = require('digger-client');
 
@@ -57,6 +56,8 @@ module.exports = function(config){
 	var protocol = location.protocol;
 
 	protocol = protocol=='file:'?'http:' : protocol;
+
+	
 	var socket = new SockJS(protocol + '//' + (config.host || 'localhost') + '/digger/sockets');
 
 	/*
@@ -389,7 +390,6 @@ module.exports = function(config){
 		$digger.user._fullname = cloneuser.fullname;	
 	}
 	$digger.blueprint = Blueprint();
-	$digger.template = Template();
 	$digger.littleid = utils.littleid;
 	$digger.diggerid = utils.diggerid;
 

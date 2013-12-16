@@ -1,0 +1,22 @@
+<script src="browser.js"></script>
+<script>
+	var Sockets = require('./src/browser.js');
+
+	window._test = {
+		connected:false
+	}
+	window.socket = new Sockets('/digger/sockets');
+
+	socket.on('connect', function(){
+		window._test.connected = true;
+	})
+
+	window.socket.request({
+		url:'/apples'
+	}, function(error, results){
+		window._test.results = results;
+	})
+
+	window.socket.radio('talk', 'pears', 10);
+
+</script>
