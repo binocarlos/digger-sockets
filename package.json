@@ -2,7 +2,7 @@
   "name": "digger-sockets",
   "version": "1.0.0",
   "description": "SockJS connector for digger requests",
-  "main": "src/index.js",
+  "main": "src/server.js",
   "browserify": "src/browser.js",
   "scripts": {
     "test": "make test"
